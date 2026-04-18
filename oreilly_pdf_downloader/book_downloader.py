@@ -41,7 +41,7 @@ class BookDownloader:
         self.session.cookies.update(cookies)
 
     def download_book(self, isbn: str) -> None:
-        self._working_book = Book(isbn)
+        self._setup_book(isbn)
 
         for i in itertools.count(1):
             chapter_url = self.book.get_chapter_url(i)
@@ -52,6 +52,16 @@ class BookDownloader:
                 break
 
         self._working_book = None
+
+    def _setup_book(self, isbn: str) -> None:
+        book = Book(isbn)
+        try:
+            self._fetch(book.cover_url)
+        except requests.exceptions.HTTPError:
+            raise ValueError('Failed to fetch book cover. Likely due to invalid ISBN.')
+
+        self._working_book = book
+        self.book.setup_dirs()
 
     def fetch_chapter(self, url: str) -> bool:
         metadata = self._fetch_json(url)
