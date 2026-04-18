@@ -4,11 +4,13 @@ from .renderer import render_chapter
 
 
 class Book:
+    METADATA_URL_TEMPLATE = 'https://learning.oreilly.com/api/v2/epubs/urn:orm:book:{isbn}/'
     URL_TEMPLATE = 'https://learning.oreilly.com/api/v2/epub-chapters/urn:orm:book:{isbn}:chapter:chapter-{chapter:02d}.html/'
 
     def __init__(self, isbn):
         self.isbn = isbn
-        self.cover_url = self.get_chapter_url(1)
+        self.title = ''
+        self.meta_url = self.METADATA_URL_TEMPLATE.format(isbn=self.isbn)
 
         self.src_dir = Path('books_src') / self.isbn
         self.asset_dir = self.src_dir / 'assets'

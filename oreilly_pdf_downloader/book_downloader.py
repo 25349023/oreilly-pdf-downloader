@@ -59,10 +59,11 @@ class BookDownloader:
     def _setup_book(self, isbn: str) -> None:
         book = Book(isbn)
         try:
-            self._get(book.cover_url)
+            metadata = self._get(book.meta_url).json()
         except requests.exceptions.HTTPError:
-            raise ValueError('Failed to _fetch book cover. Likely due to invalid ISBN.')
+            raise ValueError('Failed to _fetch book metadata. Likely due to invalid ISBN.')
 
+        book.title = metadata['title']
         self._working_book = book
         self.book.setup_dirs()
 
@@ -89,6 +90,7 @@ class BookDownloader:
     def _fetch_related_assets(self, related_assets: dict[str, list[str]]) -> None:
         self._fetch_css(related_assets['stylesheets'])
         self._fetch_images(related_assets['images'])
+        # [TODO] fetch svgs
 
     def _fetch_css(self, stylesheets: list[str]) -> None:
         for css_link in stylesheets:
