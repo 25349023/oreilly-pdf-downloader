@@ -1,0 +1,12 @@
+from jinja2 import Environment, FileSystemLoader, select_autoescape
+
+
+_env = Environment(
+    loader=FileSystemLoader('templates'),
+    autoescape=select_autoescape(),
+)
+
+
+def render_chapter(title: str, chapter_content: str) -> str:
+    template = _env.get_template('chapter.html')
+    return template.render(title=title, chapter_content=chapter_content)
