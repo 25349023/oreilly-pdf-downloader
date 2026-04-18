@@ -1,0 +1,101 @@
+import itertools
+import json
+import re
+from pathlib import Path
+
+import requests
+
+from .book import Book
+
+
+class BookDownloader:
+    CSS_URL_PAT = re.compile(r"""src:url\(['"]?(.*?\.(otf|woff2|woff|ttf))['"]?\)""")
+
+    def __init__(self) -> None:
+        self.session = requests.Session()
+        self._setup_session()
+
+        self._working_book: Book | None = None
+
+    @property
+    def book(self) -> Book:
+        if self._working_book is None:
+            raise ValueError('No book is currently being worked on.')
+        return self._working_book
+
+    def _fetch(self, *args, **kwargs) -> requests.Response:
+        resp = self.session.get(*args, **kwargs)
+        resp.raise_for_status()
+        return resp
+
+    def _fetch_json(self, *args, **kwargs) -> dict:
+        return self._fetch(*args, **kwargs).json()
+
+    def _setup_session(self) -> None:
+        if Path('cookie.json').exists():
+            with open('cookie.json', 'r') as f:
+                cookies = json.load(f)
+        else:
+            cookies = json.loads(input('Enter your cookies as a JSON string: '))
+
+        self.session.cookies.update(cookies)
+
+    def download_book(self, isbn: str) -> None:
+        self._working_book = Book(isbn)
+
+        for i in itertools.count(1):
+            chapter_url = self.book.get_chapter_url(i)
+            has_next = self.fetch_chapter(chapter_url)
+            print(f'Finished downloading chapter {i}')
+
+            if not has_next:
+                break
+
+        self._working_book = None
+
+    def fetch_chapter(self, url: str) -> bool:
+        metadata = self._fetch_json(url)
+        title = metadata['title']
+        content = self._fetch(metadata['content_url']).text
+        rendered_html = self.book.render_chapter(title, content)
+
+        with open(self.book.src_dir / metadata['content_url'].rsplit('/', 1)[1], 'w') as f:
+            f.write(rendered_html)
+
+        self.fetch_related_assets(metadata['related_assets'])
+
+        return metadata['related_assets']['next_chapter'] is not None
+
+    def fetch_related_assets(self, related_assets: dict[str, list[str]]) -> None:
+        self.fetch_css(related_assets['stylesheets'])
+        self.fetch_images(related_assets['images'])
+
+    def fetch_css(self, stylesheets: list[str]) -> None:
+        for css_link in stylesheets:
+            base_url, css_fname = css_link.rsplit('/', 1)
+            saved_filename = self.book.asset_dir / css_fname
+            self._download(css_link, saved_filename, 'w')
+            with open(saved_filename, 'r') as f:
+                css_content = f.read()
+            self._download_fonts_from_css(css_content, base_url)
+
+    def fetch_images(self, images: list[str]) -> None:
+        for img in images:
+            self._download(img, self.book.asset_dir / img.rsplit('/', 1)[1], 'wb')
+
+    def _download(self, url: str, filename: Path, mode: str, overwrite=False) -> None:
+        if filename.exists() and not overwrite:
+            # print('skipping', filename)
+            return
+
+        with open(filename, mode) as f:
+            resp = self._fetch(url)
+            content = resp.content if 'b' in mode else resp.text
+            f.write(content)
+
+        print('downloaded', filename)
+
+    def _download_fonts_from_css(self, css: str, base_url: str) -> None:
+        urls = self.CSS_URL_PAT.finditer(css)
+        for url in urls:
+            self._download(f'{base_url}/{url[1]}', self.book.asset_dir / url[1], 'wb')
