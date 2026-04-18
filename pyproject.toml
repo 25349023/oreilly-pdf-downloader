@@ -17,3 +17,8 @@ indent-width = 4
 [tool.ruff.format]
 quote-style = "single"
 indent-style = "space"
+
+[dependency-groups]
+dev = [
+    "types-requests>=2.33.0.20260408",
+]

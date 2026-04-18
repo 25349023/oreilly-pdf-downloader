@@ -1,3 +1,9 @@
+.vscode/
+__pycache__/
+
 *.ipynb
 cookie.json
 test-*.html
+
+books_src/
+assets/
