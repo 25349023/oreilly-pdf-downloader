@@ -23,13 +23,10 @@ class BookDownloader:
             raise ValueError('No book is currently being worked on.')
         return self._working_book
 
-    def _fetch(self, *args, **kwargs) -> requests.Response:
+    def _get(self, *args, **kwargs) -> requests.Response:
         resp = self.session.get(*args, **kwargs)
         resp.raise_for_status()
         return resp
-
-    def _fetch_json(self, *args, **kwargs) -> dict:
-        return self._fetch(*args, **kwargs).json()
 
     def _setup_session(self) -> None:
         if Path('cookie.json').exists():
@@ -45,7 +42,7 @@ class BookDownloader:
 
         for i in itertools.count(1):
             chapter_url = self.book.get_chapter_url(i)
-            has_next = self.fetch_chapter(chapter_url)
+            has_next = self._fetch_chapter(chapter_url)
             print(f'Finished downloading chapter {i}')
 
             if not has_next:
@@ -56,31 +53,38 @@ class BookDownloader:
     def _setup_book(self, isbn: str) -> None:
         book = Book(isbn)
         try:
-            self._fetch(book.cover_url)
+            self._get(book.cover_url)
         except requests.exceptions.HTTPError:
-            raise ValueError('Failed to fetch book cover. Likely due to invalid ISBN.')
+            raise ValueError('Failed to _fetch book cover. Likely due to invalid ISBN.')
 
         self._working_book = book
         self.book.setup_dirs()
 
-    def fetch_chapter(self, url: str) -> bool:
-        metadata = self._fetch_json(url)
+    def _fetch_chapter(self, url: str) -> bool:
+        metadata = self._get(url).json()
+        file = self.book.src_dir / metadata['content_url'].rsplit('/', 1)[1]
+        has_next = metadata['related_assets']['next_chapter'] is not None
+
+        if file.exists():
+            print(f'Chapter already exists: {file}')
+            return has_next
+
         title = metadata['title']
-        content = self._fetch(metadata['content_url']).text
+        content = self._get(metadata['content_url']).text
         rendered_html = self.book.render_chapter(title, content)
 
-        with open(self.book.src_dir / metadata['content_url'].rsplit('/', 1)[1], 'w') as f:
+        with open(file, 'w') as f:
             f.write(rendered_html)
 
-        self.fetch_related_assets(metadata['related_assets'])
+        self._fetch_related_assets(metadata['related_assets'])
 
-        return metadata['related_assets']['next_chapter'] is not None
+        return has_next
 
-    def fetch_related_assets(self, related_assets: dict[str, list[str]]) -> None:
-        self.fetch_css(related_assets['stylesheets'])
-        self.fetch_images(related_assets['images'])
+    def _fetch_related_assets(self, related_assets: dict[str, list[str]]) -> None:
+        self._fetch_css(related_assets['stylesheets'])
+        self._fetch_images(related_assets['images'])
 
-    def fetch_css(self, stylesheets: list[str]) -> None:
+    def _fetch_css(self, stylesheets: list[str]) -> None:
         for css_link in stylesheets:
             base_url, css_fname = css_link.rsplit('/', 1)
             saved_filename = self.book.asset_dir / css_fname
@@ -89,7 +93,7 @@ class BookDownloader:
                 css_content = f.read()
             self._download_fonts_from_css(css_content, base_url)
 
-    def fetch_images(self, images: list[str]) -> None:
+    def _fetch_images(self, images: list[str]) -> None:
         for img in images:
             self._download(img, self.book.asset_dir / img.rsplit('/', 1)[1], 'wb')
 
@@ -99,7 +103,7 @@ class BookDownloader:
             return
 
         with open(filename, mode) as f:
-            resp = self._fetch(url)
+            resp = self._get(url)
             content = resp.content if 'b' in mode else resp.text
             f.write(content)
 
