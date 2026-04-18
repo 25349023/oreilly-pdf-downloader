@@ -6,4 +6,5 @@ cookie.json
 test-*.html
 
 books_src/
+books_pdf/
 assets/

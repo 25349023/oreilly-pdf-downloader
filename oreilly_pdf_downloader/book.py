@@ -12,10 +12,12 @@ class Book:
 
         self.src_dir = Path('books_src') / self.isbn
         self.asset_dir = self.src_dir / 'assets'
+        self.pdf_dir = Path('books_pdf') / self.isbn
 
     def setup_dirs(self):
         self.src_dir.mkdir(parents=True, exist_ok=True)
         self.asset_dir.mkdir(parents=True, exist_ok=True)
+        self.pdf_dir.mkdir(parents=True, exist_ok=True)
 
     def get_chapter_url(self, chapter):
         return self.URL_TEMPLATE.format(isbn=self.isbn, chapter=chapter)

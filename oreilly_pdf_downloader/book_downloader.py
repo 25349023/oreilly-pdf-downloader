@@ -3,7 +3,10 @@ import json
 import re
 from pathlib import Path
 
+from playwright.async_api import async_playwright
 import requests
+
+from oreilly_pdf_downloader.pdf_printer import PDFPrinter
 
 from .book import Book
 
@@ -37,7 +40,7 @@ class BookDownloader:
 
         self.session.cookies.update(cookies)
 
-    def download_book(self, isbn: str) -> None:
+    async def download_book(self, isbn: str) -> None:
         self._setup_book(isbn)
 
         for i in itertools.count(1):
@@ -47,6 +50,9 @@ class BookDownloader:
 
             if not has_next:
                 break
+        
+        async with async_playwright() as pw, PDFPrinter(pw) as printer:
+            await printer.print_book(self.book)
 
         self._working_book = None
 
