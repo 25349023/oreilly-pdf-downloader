@@ -1,6 +1,8 @@
 import asyncio
 from pathlib import Path
-from playwright.async_api import Playwright, Browser
+
+from playwright.async_api import Browser, Playwright
+from pypdf import PdfWriter
 
 from .book import Book
 
@@ -25,6 +27,14 @@ class PDFPrinter:
             return_exceptions=True,
         )
         self._check_for_exception(results)
+        self._collect_to_book(book)
+
+    def _collect_to_book(self, book: Book):
+        merger = PdfWriter()
+        chapter_pdfs = sorted(book.pdf_dir.glob('chapters/*.pdf'), key=lambda p: int(p.stem.split('-')[-1]))
+        for pdf in chapter_pdfs:
+            merger.append(pdf)
+        merger.write(book.pdf_dir / f'{book.title}.pdf')
 
     async def _print_one_chapter(self, html_path: Path, pdf_dir: Path):
         if not self.browser:
@@ -34,7 +44,7 @@ class PDFPrinter:
             context = await self.browser.new_context()
             page = await context.new_page()
             await page.goto(f'file://{html_path.absolute()}')
-            pdf_path = pdf_dir / html_path.with_suffix('.pdf').name
+            pdf_path = pdf_dir / 'chapters' / html_path.with_suffix('.pdf').name
             await page.pdf(path=pdf_path, width='125mm', height='158mm')
             await context.close()
 
