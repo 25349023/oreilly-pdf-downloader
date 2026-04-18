@@ -1,8 +1,8 @@
-from jinja2 import Environment, FileSystemLoader, select_autoescape
+from jinja2 import Environment, PackageLoader, select_autoescape
 
 
 _env = Environment(
-    loader=FileSystemLoader('templates'),
+    loader=PackageLoader('oreilly_pdf_downloader'),
     autoescape=select_autoescape(),
 )
 

@@ -4,12 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{ title }}</title>
-    <link rel="preload" href="assets/fonts/gilroy-bold.woff2" as="font" type="font/woff2" crossorigin="anonymous" fetchpriority="high">
-    <link rel="preload" href="assets/fonts/gilroy-regular.woff2" as="font" type="font/woff2" crossorigin="anonymous" fetchpriority="high">
-    <link rel="preload" href="assets/fonts/gilroy-medium.woff2" as="font" type="font/woff2" crossorigin="anonymous" fetchpriority="high">
-    <link rel="preload" href="assets/fonts/gilroy-semibold.woff2" as="font" type="font/woff2" crossorigin="anonymous" fetchpriority="high">
-    <link rel="preload" href="assets/fonts/GuardianTextSans-Medium-Web.woff2" as="font" type="font/woff2" crossorigin="anonymous" fetchpriority="high">
-    <link rel="preload" href="assets/fonts/GuardianTextSans-Regular-Web.woff2" as="font" type="font/woff2" crossorigin="anonymous" fetchpriority="high">
     <link rel="stylesheet" href="assets/base.min.css">
     <link rel="stylesheet" href="assets/overrides.css">
     <link rel="stylesheet" href="assets/print1.css">
@@ -20,6 +14,6 @@
     <link rel="stylesheet" href="assets/styles3.css">
 </head>
 <body>
-    {{ chapter_content }}
+    {{ chapter_content | safe }}
 </body>
 </html>
