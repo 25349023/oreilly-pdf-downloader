@@ -4,14 +4,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{ title }}</title>
-    <link rel="stylesheet" href="assets/base.min.css">
-    <link rel="stylesheet" href="assets/overrides.css">
-    <link rel="stylesheet" href="assets/print1.css">
-    <link rel="stylesheet" href="assets/print2.css">
-    <link rel="stylesheet" href="assets/print3.css">
-    <link rel="stylesheet" href="assets/styles1.css">
-    <link rel="stylesheet" href="assets/styles2.css">
-    <link rel="stylesheet" href="assets/styles3.css">
+
+    {%- for css in stylesheets %}
+    <link rel="stylesheet" href="{{ css }}">
+    {%- endfor %}
+
     <style>
         body {
             margin: 0;

@@ -8,7 +8,7 @@ import requests
 
 from oreilly_pdf_downloader.pdf_printer import PDFPrinter
 
-from .book import Book
+from .book import Book, Asset
 
 
 class BookDownloader:
@@ -69,37 +69,46 @@ class BookDownloader:
 
     def _fetch_chapter(self, url: str) -> bool:
         metadata = self._get(url).json()
+
+        assets = self._fetch_related_assets(metadata['related_assets'])
+
         file = self.book.src_dir / metadata['content_url'].rsplit('/', 1)[1]
         has_next = metadata['related_assets']['next_chapter'] is not None
-
         if file.exists():
             print(f'Chapter already exists: {file}')
             return has_next
 
         title = metadata['title']
         content = self._get(metadata['content_url']).text
-        rendered_html = self.book.render_chapter(title, content)
+        rendered_html = self.book.render_chapter(title, content, assets)
 
         with open(file, 'w') as f:
             f.write(rendered_html)
 
-        self._fetch_related_assets(metadata['related_assets'])
-
         return has_next
 
-    def _fetch_related_assets(self, related_assets: dict[str, list[str]]) -> None:
-        self._fetch_css(related_assets['stylesheets'])
+    def _fetch_related_assets(self, related_assets: dict[str, list[str]]) -> Asset:
+        stylesheets = self._fetch_css(related_assets['stylesheets'])
         self._fetch_images(related_assets['images'])
         # [TODO] fetch svgs
+        return Asset(stylesheets=stylesheets)
 
-    def _fetch_css(self, stylesheets: list[str]) -> None:
+    def _fetch_css(self, stylesheets: list[str]) -> list[str]:
+        fetched_css = []
+
         for css_link in stylesheets:
             base_url, css_fname = css_link.rsplit('/', 1)
             saved_filename = self.book.asset_dir / css_fname
+
             self._download(css_link, saved_filename, 'w')
             with open(saved_filename, 'r') as f:
                 css_content = f.read()
             self._download_fonts_from_css(css_content, base_url)
+
+            rel_path = str(saved_filename.relative_to(self.book.src_dir))
+            fetched_css.append(rel_path)
+
+        return fetched_css
 
     def _fetch_images(self, images: list[str]) -> None:
         for img in images:

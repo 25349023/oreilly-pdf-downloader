@@ -1,6 +1,6 @@
 from pathlib import Path
 
-from .renderer import render_chapter
+from .renderer import Asset, render_chapter
 
 
 class Book:
@@ -24,9 +24,9 @@ class Book:
     def get_chapter_url(self, chapter):
         return self.URL_TEMPLATE.format(isbn=self.isbn, chapter=chapter)
 
-    def render_chapter(self, title: str, content: str) -> str:
+    def render_chapter(self, title: str, content: str, assets: Asset) -> str:
         content = self._replace_asset_urls(content)
-        return render_chapter(title, content)
+        return render_chapter(title, content, assets)
 
     def _replace_asset_urls(self, content: str) -> str:
         return content.replace(f'/api/v2/epubs/urn:orm:book:{self.isbn}/files',
