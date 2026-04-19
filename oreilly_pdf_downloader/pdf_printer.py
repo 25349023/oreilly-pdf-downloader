@@ -45,7 +45,7 @@ class PDFPrinter:
             page = await context.new_page()
             await page.goto(f'file://{html_path.absolute()}')
             pdf_path = pdf_dir / 'chapters' / html_path.with_suffix('.pdf').name
-            await page.pdf(path=pdf_path, width='125mm', height='158mm')
+            await page.pdf(path=pdf_path, width='185mm', height='230mm')
             await context.close()
 
     def _check_for_exception(self, results: list[BaseException | None]) -> None:
