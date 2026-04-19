@@ -10,11 +10,17 @@ class Book:
     def __init__(self, isbn):
         self.isbn = isbn
         self.title = ''
+        self.pages = 0
+        
         self.meta_url = self.METADATA_URL_TEMPLATE.format(isbn=self.isbn)
 
         self.src_dir = Path('books_src') / self.isbn
         self.asset_dir = self.src_dir / 'assets'
         self.pdf_dir = Path('books_pdf') / self.isbn
+
+    def set_metadata(self, title, pages) -> None:
+        self.title = title
+        self.pages = pages
 
     def setup_dirs(self):
         self.src_dir.mkdir(parents=True, exist_ok=True)
@@ -25,9 +31,9 @@ class Book:
         return self.URL_TEMPLATE.format(isbn=self.isbn, chapter=chapter)
 
     def render_chapter(self, title: str, content: str, assets: Asset) -> str:
-        content = self._replace_asset_urls(content)
+        content = self._replace_asset_srcs(content)
         return render_chapter(title, content, assets)
 
-    def _replace_asset_urls(self, content: str) -> str:
+    def _replace_asset_srcs(self, content: str) -> str:
         return content.replace(f'/api/v2/epubs/urn:orm:book:{self.isbn}/files',
                                str(self.asset_dir.name))  # fmt: skip

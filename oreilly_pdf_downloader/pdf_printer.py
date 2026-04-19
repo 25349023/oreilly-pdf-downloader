@@ -3,8 +3,10 @@ from pathlib import Path
 
 from playwright.async_api import Browser, Playwright
 from pypdf import PdfWriter
+import tqdm
 
 from .book import Book
+from .utils import tqdm_gather
 
 
 class PDFPrinter:
@@ -22,19 +24,19 @@ class PDFPrinter:
             await self.browser.close()
 
     async def print_book(self, book: Book):
-        results = await asyncio.gather(
+        results = await tqdm_gather(
             *(self._print_one_chapter(chapter, book.pdf_dir) for chapter in book.src_dir.glob('*.html')),
             return_exceptions=True,
+            desc='Printing Chapters',
         )
         self._check_for_exception(results)
 
-        print('All chapters printed. Collecting into one PDF...')
         self._collect_to_book(book)
 
     def _collect_to_book(self, book: Book):
         merger = PdfWriter()
         chapter_pdfs = sorted(book.pdf_dir.glob('chapters/*.pdf'), key=lambda p: int(p.stem.split('-')[-1]))
-        for pdf in chapter_pdfs:
+        for pdf in tqdm.tqdm(chapter_pdfs, desc='Merging Chapters'):
             merger.append(pdf)
         merger.write(book.pdf_dir / f'{book.title}.pdf')
 
@@ -53,4 +55,5 @@ class PDFPrinter:
     def _check_for_exception(self, results: list[BaseException | None]) -> None:
         for i, result in enumerate(results, 1):
             if isinstance(result, Exception):
-                print(f'Error printing chapter {i}: {result}')
+                pass
+                # print(f'Error printing chapter {i}: {result}')

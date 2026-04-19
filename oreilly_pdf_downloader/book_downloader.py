@@ -5,6 +5,7 @@ from pathlib import Path
 
 from playwright.async_api import async_playwright
 import requests
+import tqdm
 
 from oreilly_pdf_downloader.pdf_printer import PDFPrinter
 
@@ -12,7 +13,7 @@ from .book import Book, Asset
 
 
 class BookDownloader:
-    CSS_URL_PAT = re.compile(r"""src:url\(['"]?(.*?\.(otf|woff2|woff|ttf))['"]?\)""")
+    CSS_FONT_URL_PAT = re.compile(r"""src:url\(['"]?(.*?\.(otf|woff2|woff|ttf))['"]?\)""")
 
     def __init__(self) -> None:
         self.session = requests.Session()
@@ -51,33 +52,32 @@ class BookDownloader:
     async def download_book(self, isbn: str) -> None:
         self._setup_book(isbn)
 
-        # [TODO] use logger instead of print
-        # [TODO] use tqdm to show progress
-        print(f'Starting to download book: {self.book.title}')
-        for i in itertools.count(1):
+        # [TODO] use logger
+        print(f'Start downloading the book: {self.book.title}')
+
+        for i in tqdm.tqdm(itertools.count(1), total=self.book.pages, desc='Downloading Chapters'):
             chapter_url = self.book.get_chapter_url(i)
             has_next = self._fetch_chapter(chapter_url)
-            print(f'Finished downloading chapter {i}')
-
             if not has_next:
                 break
 
-        print('All chapters downloaded. Starting PDF generation...')
         async with async_playwright() as pw, PDFPrinter(pw) as printer:
             await printer.print_book(self.book)
 
+        print(f'Book "{self.book.title}" downloaded successfully.')
         self._working_book = None
 
     def _setup_book(self, isbn: str) -> None:
         book = Book(isbn)
         try:
             metadata = self._get(book.meta_url).json()
-        except requests.exceptions.HTTPError:
-            raise ValueError('Failed to _fetch book metadata. Likely due to invalid ISBN.')
+            spine_metadata = self._get(metadata['spine']).json()
+        except requests.exceptions.HTTPError as e:
+            raise ValueError(f'Failed to fetch the metadata of the book {isbn}: {e}')
 
-        book.title = metadata['title']
+        book.set_metadata(metadata['title'], spine_metadata['count'])
+        book.setup_dirs()
         self._working_book = book
-        self.book.setup_dirs()
 
     def _fetch_chapter(self, url: str) -> bool:
         metadata = self._get(url).json()
@@ -85,7 +85,7 @@ class BookDownloader:
         file = self.book.src_dir / metadata['content_url'].rsplit('/', 1)[1]
         has_next = metadata['related_assets']['next_chapter'] is not None
         if file.exists():
-            print(f'Chapter already exists: {file}')
+            # print(f'Chapter already exists: {file}')
             return has_next
 
         assets = self._fetch_related_assets(metadata['related_assets'])
@@ -108,7 +108,7 @@ class BookDownloader:
     def _fetch_css(self, stylesheets: list[str]) -> list[str]:
         fetched_css = []
 
-        for css_link in stylesheets:
+        for css_link in tqdm.tqdm(stylesheets, desc='Fetching CSS & Fonts', leave=False):
             base_url, css_fname = css_link.rsplit('/', 1)
             saved_filename = self.book.asset_dir / css_fname
 
@@ -123,12 +123,11 @@ class BookDownloader:
         return fetched_css
 
     def _fetch_images(self, images: list[str]) -> None:
-        for img in images:
+        for img in tqdm.tqdm(images, desc='Fetching Images', leave=False):
             self._download(img, self.book.asset_dir / img.rsplit('/', 1)[1], 'wb')
 
     def _download(self, url: str, filename: Path, mode: str, overwrite=False) -> None:
         if filename.exists() and not overwrite:
-            # print('skipping', filename)
             return
 
         with open(filename, mode) as f:
@@ -136,9 +135,9 @@ class BookDownloader:
             content = resp.content if 'b' in mode else resp.text
             f.write(content)
 
-        print('downloaded', filename)
+        # print('downloaded', filename)
 
     def _download_fonts_from_css(self, css: str, base_url: str) -> None:
-        urls = self.CSS_URL_PAT.finditer(css)
-        for url in urls:
-            self._download(f'{base_url}/{url[1]}', self.book.asset_dir / url[1], 'wb')
+        font_urls = self.CSS_FONT_URL_PAT.finditer(css)
+        for font in tqdm.tqdm(font_urls, desc='Fetching Fonts', total=40, leave=False):
+            self._download(f'{base_url}/{font[1]}', self.book.asset_dir / font[1], 'wb')
