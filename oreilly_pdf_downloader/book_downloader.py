@@ -43,6 +43,9 @@ class BookDownloader:
     async def download_book(self, isbn: str) -> None:
         self._setup_book(isbn)
 
+        # [TODO] use logger instead of print
+        # [TODO] use tqdm to show progress
+        print(f'Starting to download book: {self.book.title}')
         for i in itertools.count(1):
             chapter_url = self.book.get_chapter_url(i)
             has_next = self._fetch_chapter(chapter_url)
@@ -50,7 +53,8 @@ class BookDownloader:
 
             if not has_next:
                 break
-        
+
+        print('All chapters downloaded. Starting PDF generation...')
         async with async_playwright() as pw, PDFPrinter(pw) as printer:
             await printer.print_book(self.book)
 

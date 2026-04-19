@@ -27,6 +27,8 @@ class PDFPrinter:
             return_exceptions=True,
         )
         self._check_for_exception(results)
+
+        print('All chapters printed. Collecting into one PDF...')
         self._collect_to_book(book)
 
     def _collect_to_book(self, book: Book):
