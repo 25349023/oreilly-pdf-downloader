@@ -32,6 +32,14 @@ class BookDownloader:
         return resp
 
     def _setup_session(self) -> None:
+        self.session.headers.update(
+            {
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:149.0) Gecko/20100101 Firefox/149.0',
+                'Origin': 'https://learning.oreilly.com',
+                'Referer': 'https://learning.oreilly.com/',
+            }
+        )
+
         if Path('cookie.json').exists():
             with open('cookie.json', 'r') as f:
                 cookies = json.load(f)
