@@ -70,13 +70,13 @@ class BookDownloader:
     def _fetch_chapter(self, url: str) -> bool:
         metadata = self._get(url).json()
 
-        assets = self._fetch_related_assets(metadata['related_assets'])
-
         file = self.book.src_dir / metadata['content_url'].rsplit('/', 1)[1]
         has_next = metadata['related_assets']['next_chapter'] is not None
         if file.exists():
             print(f'Chapter already exists: {file}')
             return has_next
+
+        assets = self._fetch_related_assets(metadata['related_assets'])
 
         title = metadata['title']
         content = self._get(metadata['content_url']).text
