@@ -5,6 +5,8 @@ __pycache__/
 cookie.json
 test-*.html
 
+downloader.log*
+
 books_src/
 books_pdf/
 assets/
