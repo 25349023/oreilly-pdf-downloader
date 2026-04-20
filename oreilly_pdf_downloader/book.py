@@ -1,6 +1,9 @@
+import logging
 from pathlib import Path
 
 from .renderer import Asset, render_chapter
+
+logger = logging.getLogger(__name__)
 
 
 class Book:
@@ -11,7 +14,7 @@ class Book:
         self.isbn = isbn
         self.title = ''
         self.pages = 0
-        
+
         self.meta_url = self.METADATA_URL_TEMPLATE.format(isbn=self.isbn)
 
         self.src_dir = Path('books_src') / self.isbn
@@ -23,9 +26,11 @@ class Book:
         self.pages = pages
 
     def setup_dirs(self):
+        logger.info(f'Setting up directories for book "{self.title}" (ISBN: {self.isbn})')
         self.src_dir.mkdir(parents=True, exist_ok=True)
         self.asset_dir.mkdir(parents=True, exist_ok=True)
         self.pdf_dir.mkdir(parents=True, exist_ok=True)
+        logger.info(f'Directories for book "{self.title}" set up at {self.src_dir}, {self.asset_dir}, and {self.pdf_dir}')
 
     def get_chapter_url(self, chapter):
         return self.URL_TEMPLATE.format(isbn=self.isbn, chapter=chapter)
