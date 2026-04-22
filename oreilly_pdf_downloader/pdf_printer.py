@@ -31,8 +31,9 @@ class PDFPrinter:
 
     async def print_book(self, book: Book):
         with log_step(logger, f'Printing chapters for book [{book.isbn}]', level=logging.INFO):
+            all_chapters = (ch for ch in book.src_dir.iterdir() if ch.is_file())
             results = await tqdm_gather(
-                *(self._print_one_chapter(chapter, book.pdf_dir) for chapter in book.src_dir.glob('*.html')),
+                *(self._print_one_chapter(chapter, book.pdf_dir) for chapter in all_chapters),
                 return_exceptions=True,
                 desc='Printing Chapters',
             )
@@ -43,7 +44,7 @@ class PDFPrinter:
     @with_log(logger, 'Merging chapters into final book PDF for [{book.isbn}]', level=logging.INFO)
     def _collect_to_book(self, book: Book):
         merger = PdfWriter()
-        chapter_pdfs = sorted(book.pdf_dir.glob('chapters/*.pdf'), key=lambda p: int(p.stem.split('-')[-1]))
+        chapter_pdfs = sorted(book.pdf_dir.glob('chapters/*.pdf'), key=lambda p: int(p.stem.split('_')[0]))
         for pdf in tqdm.tqdm(chapter_pdfs, desc='Merging Chapters'):
             merger.append(pdf)
         merger.write(book.pdf_dir / f'{book.title}.pdf')

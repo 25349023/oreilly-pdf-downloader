@@ -105,7 +105,9 @@ class BookDownloader:
 
     @with_log(logger, 'Fetching chapter from {metadata[content_url]}', level=logging.DEBUG)
     def _fetch_one_chapter(self, metadata: dict) -> None:
-        file = self.book.src_dir / metadata['content_url'].rsplit('/', 1)[1]
+        chapter_num = metadata['indexed_position']
+        org_fname = Path(metadata['content_url'].rsplit('/', 1)[1]).with_suffix('.html')
+        file = self.book.src_dir / f'{chapter_num:03d}_{org_fname}'
         if file.exists():
             logger.debug(f'Chapter {file} already exists. Skipping download.')
             return
