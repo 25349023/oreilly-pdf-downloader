@@ -1,5 +1,5 @@
 import inspect
-from contextlib import asynccontextmanager, contextmanager
+from contextlib import contextmanager
 from functools import wraps
 
 
@@ -37,9 +37,3 @@ def with_log(logger, message, level):
         return wrapper
 
     return decorator
-
-
-@asynccontextmanager
-def wrap_sync(context_mgr):
-    with context_mgr as resource:
-        yield resource

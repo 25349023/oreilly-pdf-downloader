@@ -7,8 +7,8 @@ from playwright.async_api import Browser, Playwright
 from pypdf import PdfWriter
 
 from .book import Book
-from .log_utils import log_step, with_log, wrap_sync
-from .utils import tqdm_gather
+from .log_utils import log_step, with_log
+from .utils import tqdm_gather, wrap_sync
 
 logger = logging.getLogger(__name__)
 

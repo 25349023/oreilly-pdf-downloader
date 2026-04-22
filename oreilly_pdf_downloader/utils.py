@@ -1,3 +1,5 @@
+from contextlib import asynccontextmanager
+
 from tqdm.asyncio import tqdm
 
 
@@ -12,3 +14,9 @@ async def tqdm_gather(*fs, return_exceptions=False, **kwargs):
             return e
 
     return await tqdm.gather(*map(wrap, fs), **kwargs)
+
+
+@asynccontextmanager
+async def wrap_sync(context_mgr):
+    with context_mgr as resource:
+        yield resource
