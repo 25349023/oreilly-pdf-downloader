@@ -42,5 +42,7 @@ class Book:
         return render_chapter(title, content, assets)
 
     def _replace_asset_srcs(self, content: str) -> str:
-        return content.replace(f'/api/v2/epubs/urn:orm:book:{self.isbn}/files',
-                               str(self.asset_dir.name))  # fmt: skip
+        content = content.replace(f'/api/v2/epubs/urn:orm:book:{self.isbn}/files',
+                                  str(self.asset_dir.name))  # fmt: skip
+        content = content.replace('assets/images', str(self.asset_dir.name))
+        return content
