@@ -67,12 +67,13 @@ class BookDownloader:
         self._setup_book(isbn)
 
         print(f'Start downloading the book: {self.book.title}')
-        with log_step(logger, f'Downloading chapters. Total: {self.book.pages}', level=logging.INFO):
-            for i in tqdm.tqdm(itertools.count(1), total=self.book.pages, desc='Downloading Chapters'):
-                chapter_url = self.book.get_chapter_url(i)
-                has_next = self._fetch_chapter(chapter_url)
-                if not has_next:
-                    break
+        batch_url = self.book.startpoint_url
+        with (
+            log_step(logger, f'Downloading chapters. Total: {self.book.pages}', level=logging.INFO),
+            tqdm.tqdm(total=self.book.pages, desc='Downloading Chapters') as pbar,
+        ):
+            while batch_url is not None:
+                batch_url = self._fetch_chapter_by_batch(batch_url, pbar)
 
         async with async_playwright() as pw, PDFPrinter(pw) as printer:
             await printer.print_book(self.book)
@@ -92,15 +93,22 @@ class BookDownloader:
         book.setup_dirs()
         self._working_book = book
 
-    @with_log(logger, 'Fetching chapter from {url}', level=logging.DEBUG)
-    def _fetch_chapter(self, url: str) -> bool:
+    @with_log(logger, 'Fetching batch of chapters from {url}', level=logging.DEBUG)
+    def _fetch_chapter_by_batch(self, url: str, pbar: tqdm.tqdm) -> str | None:
         metadata = self._get(url).json()
 
+        for chapter in metadata['results']:
+            self._fetch_one_chapter(chapter)
+            pbar.update(1)
+
+        return metadata['next']
+
+    @with_log(logger, 'Fetching chapter from {metadata[content_url]}', level=logging.DEBUG)
+    def _fetch_one_chapter(self, metadata: dict) -> None:
         file = self.book.src_dir / metadata['content_url'].rsplit('/', 1)[1]
-        has_next = metadata['related_assets']['next_chapter'] is not None
         if file.exists():
             logger.debug(f'Chapter {file} already exists. Skipping download.')
-            return has_next
+            return
 
         assets = self._fetch_related_assets(metadata['related_assets'])
 
@@ -110,8 +118,6 @@ class BookDownloader:
 
         with open(file, 'w') as f:
             f.write(rendered_html)
-
-        return has_next
 
     @with_log(logger, 'Fetching related assets for chapter', level=logging.DEBUG)
     def _fetch_related_assets(self, related_assets: dict[str, list[str]]) -> Asset:

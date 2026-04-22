@@ -10,6 +10,7 @@ logger = logging.getLogger(__name__)
 class Book:
     METADATA_URL_TEMPLATE = 'https://learning.oreilly.com/api/v2/epubs/urn:orm:book:{isbn}/'
     URL_TEMPLATE = 'https://learning.oreilly.com/api/v2/epub-chapters/urn:orm:book:{isbn}:chapter:chapter-{chapter:02d}.html/'
+    STARTPOINT_TEMPLATE = 'https://learning.oreilly.com/api/v2/epub-chapters/?epub_identifier=urn:orm:book:{isbn}'
 
     def __init__(self, isbn):
         self.isbn = isbn
@@ -17,6 +18,7 @@ class Book:
         self.pages = 0
 
         self.meta_url = self.METADATA_URL_TEMPLATE.format(isbn=self.isbn)
+        self.startpoint_url = self.STARTPOINT_TEMPLATE.format(isbn=self.isbn)
 
         self.src_dir = Path('books_src') / self.isbn
         self.asset_dir = self.src_dir / 'assets'
