@@ -25,6 +25,13 @@ A tool to download O'Reilly ebooks as PDF format.
    ```
 4. Enter the ISBN of the book you want to download when prompted.
 
+### Options
+
+- `--test-run`: Run a test download that only fetches 8 pages. Useful for testing the printed layout before downloading a full book.
+  ```bash
+  uv run python main.py --test-run
+  ```
+
 ## Getting Your Cookie
 
 To download O'Reilly content, you need to provide your session cookie. Follow these steps to extract it:
