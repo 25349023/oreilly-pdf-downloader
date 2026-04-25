@@ -32,6 +32,12 @@ A tool to download O'Reilly ebooks as PDF format.
   uv run python main.py --test-run
   ```
 
+- `--page-size`: Set the page size for the PDF in millimeters (default: 185 x 230 mm).
+  ```bash
+  uv run python main.py --page-size 210 297
+  ```
+  Example: `210 297` for A4 size.
+
 ## Getting Your Cookie
 
 To download O'Reilly content, you need to provide your session cookie. Follow these steps to extract it:
