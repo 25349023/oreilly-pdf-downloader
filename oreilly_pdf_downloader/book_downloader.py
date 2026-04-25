@@ -17,10 +17,11 @@ logger = logging.getLogger(__name__)
 class BookDownloader:
     CSS_FONT_URL_PAT = re.compile(r"""src:url\(['"]?(.*?\.(otf|woff2|woff|ttf))['"]?\)""")
 
-    def __init__(self) -> None:
+    def __init__(self, page_size: tuple[int, int]) -> None:
         self.session = requests.Session()
         self._setup_session()
 
+        self._page_size = page_size
         self._working_book: Book | None = None
 
     @property
@@ -74,7 +75,7 @@ class BookDownloader:
             while batch_url is not None:
                 batch_url = self._fetch_chapter_by_batch(batch_url, pbar, test_run=test_run)
 
-        async with async_playwright() as pw, PDFPrinter(pw) as printer:
+        async with async_playwright() as pw, PDFPrinter(pw, self._page_size) as printer:
             await printer.print_book(self.book)
 
         print(f'Book "{self.book.title}" downloaded successfully.')

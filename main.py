@@ -51,11 +51,16 @@ def setup_logging():
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="O'Reilly PDF Downloader")
     parser.add_argument('--test-run', action='store_true', help='Run a test download that only fetches 8 pages')
+    parser.add_argument(
+        '--page-size', nargs=2, type=int, default=(185, 230),
+        metavar=('width', 'height'), help='Set the page size (unit: mm) for the PDF',
+    )  # fmt: skip
     return parser.parse_args()
 
-async def main():
+
+async def main() -> None:
     args = parse_args()
-    downloader = BookDownloader()
+    downloader = BookDownloader(page_size=args.page_size)
 
     target_isbn = input('Enter the ISBN of the book you want to download: ')
     await downloader.download_book(target_isbn, test_run=args.test_run)
