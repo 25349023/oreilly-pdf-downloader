@@ -1,4 +1,3 @@
-import itertools
 import json
 import logging
 import re
@@ -62,8 +61,8 @@ class BookDownloader:
                 cookies = json.loads(input('Enter your cookies as a JSON string: '))
             self.session.cookies.update(cookies)
 
-    @with_log(logger, 'Downloading book [{isbn}]', level=logging.INFO)
-    async def download_book(self, isbn: str) -> None:
+    @with_log(logger, 'Downloading book [{isbn}] (test run = {test_run})', level=logging.INFO)
+    async def download_book(self, isbn: str, test_run=False) -> None:
         self._setup_book(isbn)
 
         print(f'Start downloading the book: {self.book.title}')
@@ -73,7 +72,7 @@ class BookDownloader:
             tqdm.tqdm(total=self.book.pages, desc='Downloading Chapters') as pbar,
         ):
             while batch_url is not None:
-                batch_url = self._fetch_chapter_by_batch(batch_url, pbar)
+                batch_url = self._fetch_chapter_by_batch(batch_url, pbar, test_run=test_run)
 
         async with async_playwright() as pw, PDFPrinter(pw) as printer:
             await printer.print_book(self.book)
@@ -94,12 +93,16 @@ class BookDownloader:
         self._working_book = book
 
     @with_log(logger, 'Fetching batch of chapters from {url}', level=logging.DEBUG)
-    def _fetch_chapter_by_batch(self, url: str, pbar: tqdm.tqdm) -> str | None:
+    def _fetch_chapter_by_batch(self, url: str, pbar: tqdm.tqdm, test_run=False) -> str | None:
         metadata = self._get(url).json()
 
         for chapter in metadata['results']:
             self._fetch_one_chapter(chapter)
             pbar.update(1)
+
+            if test_run and pbar.n >= 8:
+                logger.info('Test run limit reached (8 chapters). Stopping download.')
+                return None
 
         return metadata['next']
 

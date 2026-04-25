@@ -1,3 +1,4 @@
+import argparse
 import asyncio
 import logging.config
 
@@ -47,11 +48,17 @@ def setup_logging():
     logger.info('Logging is set up.')
 
 
+def parse_args() -> argparse.Namespace:
+    parser = argparse.ArgumentParser(description="O'Reilly PDF Downloader")
+    parser.add_argument('--test-run', action='store_true', help='Run a test download that only fetches 8 pages')
+    return parser.parse_args()
+
 async def main():
+    args = parse_args()
     downloader = BookDownloader()
 
     target_isbn = input('Enter the ISBN of the book you want to download: ')
-    await downloader.download_book(target_isbn)
+    await downloader.download_book(target_isbn, test_run=args.test_run)
 
 
 if __name__ == '__main__':
