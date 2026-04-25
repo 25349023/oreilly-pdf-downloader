@@ -9,7 +9,7 @@ logger = logging.getLogger(__name__)
 
 class Book:
     METADATA_URL_TEMPLATE = 'https://learning.oreilly.com/api/v2/epubs/urn:orm:book:{isbn}/'
-    URL_TEMPLATE = 'https://learning.oreilly.com/api/v2/epub-chapters/urn:orm:book:{isbn}:chapter:chapter-{chapter:02d}.html/'
+    URL_TEMPLATE = 'https://learning.oreilly.com/api/v2/epub-chapters/urn:orm:book:{isbn}:chapter:chapter-{chapter:02d}.html/'  # fmt: skip
     STARTPOINT_TEMPLATE = 'https://learning.oreilly.com/api/v2/epub-chapters/?epub_identifier=urn:orm:book:{isbn}'
 
     def __init__(self, isbn):
@@ -28,7 +28,9 @@ class Book:
         self.title = title
         self.pages = pages
 
-    @with_log(logger, 'Setting up directories for book [{self.isbn}] at {self.src_dir} and {self.pdf_dir}', level=logging.INFO)
+    @with_log(
+        logger, 'Setting up directories for book [{self.isbn}] at {self.src_dir} and {self.pdf_dir}', level=logging.INFO
+    )
     def setup_dirs(self):
         self.src_dir.mkdir(parents=True, exist_ok=True)
         self.asset_dir.mkdir(parents=True, exist_ok=True)
