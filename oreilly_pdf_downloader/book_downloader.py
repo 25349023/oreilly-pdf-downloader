@@ -78,7 +78,7 @@ class BookDownloader:
             while batch_url is not None:
                 batch_url = self._fetch_chapter_by_batch(batch_url, pbar, test_run=self._config.test_run)
 
-        async with async_playwright() as pw, PDFPrinter(pw, self._config.page_size) as printer:
+        async with async_playwright() as pw, PDFPrinter(pw, self._config) as printer:
             await printer.print_book(self.book)
 
         print(f'Book "{self.book.title}" downloaded successfully.')

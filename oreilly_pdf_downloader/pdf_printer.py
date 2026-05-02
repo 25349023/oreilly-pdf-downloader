@@ -7,6 +7,7 @@ from playwright.async_api import Browser, Playwright
 from pypdf import PdfWriter
 
 from .book import Book
+from .config import Config
 from .log_utils import log_step, with_log
 from .utils import tqdm_gather, wrap_sync
 
@@ -14,11 +15,12 @@ logger = logging.getLogger(__name__)
 
 
 class PDFPrinter:
-    def __init__(self, pw: Playwright, page_size: tuple[int, int]) -> None:
+    def __init__(self, pw: Playwright, config: Config) -> None:
         self.chromium = pw.chromium
         self.browser: Browser | None = None
         self.sem = asyncio.Semaphore(10)
-        self.page_size = page_size  # [width, height] in mm
+        logger.debug(f'Initializing PDFPrinter with config: {config}')
+        self.config = config
 
     @with_log(logger, 'Launching Playwright Chromium browser', level=logging.DEBUG)
     async def __aenter__(self):
@@ -63,7 +65,7 @@ class PDFPrinter:
             context = await self.browser.new_context()
             page = await context.new_page()
             await page.goto(f'file://{html_path.absolute()}')
-            w, h = self.page_size
+            w, h = self.config.page_size
             await page.pdf(path=pdf_path, width=f'{w}mm', height=f'{h}mm')
             await context.close()
 
