@@ -97,7 +97,7 @@ class BookDownloader:
         self._working_book = book
 
     @with_log(logger, 'Fetching batch of chapters from {url}', level=logging.DEBUG)
-    def _fetch_chapter_by_batch(self, url: str, pbar: tqdm.tqdm, test_run=False) -> str | None:
+    def _fetch_chapter_by_batch(self, url: str, pbar: tqdm.tqdm, test_run: bool) -> str | None:
         metadata = self._get(url).json()
 
         for chapter in metadata['results']:
