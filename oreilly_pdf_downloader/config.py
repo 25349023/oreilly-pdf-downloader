@@ -7,7 +7,7 @@ def preprocess_args(args: Namespace) -> dict:
 
 
 @dataclass
-class DownloaderConfig:
+class Config:
     # Default page size in mm (width, height)
     page_size: tuple[int, int] = (185, 230)
 

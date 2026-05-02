@@ -8,7 +8,7 @@ import tqdm
 from playwright.async_api import async_playwright
 
 from .book import Asset, Book
-from .config import DownloaderConfig
+from .config import Config
 from .log_utils import log_step, with_log
 from .pdf_printer import PDFPrinter
 
@@ -18,7 +18,7 @@ logger = logging.getLogger(__name__)
 class BookDownloader:
     CSS_FONT_URL_PAT = re.compile(r"""src:url\(['"]?(.*?\.(otf|woff2|woff|ttf))['"]?\)""")
 
-    def __init__(self, config: DownloaderConfig) -> None:
+    def __init__(self, config: Config) -> None:
         logger.debug(f'Initializing BookDownloader with config: {config}')
 
         self._config = config
