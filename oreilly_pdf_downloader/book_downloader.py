@@ -8,6 +8,7 @@ import tqdm
 from playwright.async_api import async_playwright
 
 from .book import Asset, Book
+from .config import DownloaderConfig
 from .log_utils import log_step, with_log
 from .pdf_printer import PDFPrinter
 
@@ -17,11 +18,11 @@ logger = logging.getLogger(__name__)
 class BookDownloader:
     CSS_FONT_URL_PAT = re.compile(r"""src:url\(['"]?(.*?\.(otf|woff2|woff|ttf))['"]?\)""")
 
-    def __init__(self, page_size: tuple[int, int]) -> None:
+    def __init__(self, config: DownloaderConfig) -> None:
         self.session = requests.Session()
         self._setup_session()
 
-        self._page_size = page_size
+        self._config = config
         self._working_book: Book | None = None
 
     @property
@@ -62,8 +63,8 @@ class BookDownloader:
                 cookies = json.loads(input('Enter your cookies as a JSON string: '))
             self.session.cookies.update(cookies)
 
-    @with_log(logger, 'Downloading book [{isbn}] (test run = {test_run})', level=logging.INFO)
-    async def download_book(self, isbn: str, test_run=False) -> None:
+    @with_log(logger, 'Downloading book [{isbn}] (test run = {self._config.test_run})', level=logging.INFO)
+    async def download_book(self, isbn: str) -> None:
         self._setup_book(isbn)
 
         print(f'Start downloading the book: {self.book.title}')
@@ -73,9 +74,9 @@ class BookDownloader:
             tqdm.tqdm(total=self.book.pages, desc='Downloading Chapters') as pbar,
         ):
             while batch_url is not None:
-                batch_url = self._fetch_chapter_by_batch(batch_url, pbar, test_run=test_run)
+                batch_url = self._fetch_chapter_by_batch(batch_url, pbar, test_run=self._config.test_run)
 
-        async with async_playwright() as pw, PDFPrinter(pw, self._page_size) as printer:
+        async with async_playwright() as pw, PDFPrinter(pw, self._config.page_size) as printer:
             await printer.print_book(self.book)
 
         print(f'Book "{self.book.title}" downloaded successfully.')
