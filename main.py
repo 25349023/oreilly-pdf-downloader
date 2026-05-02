@@ -5,7 +5,7 @@ import logging.config
 import dacite
 
 from oreilly_pdf_downloader.book_downloader import BookDownloader
-from oreilly_pdf_downloader.config import DownloaderConfig
+from oreilly_pdf_downloader.config import DownloaderConfig, preprocess_args
 
 
 def setup_logging():
@@ -63,9 +63,10 @@ def parse_args() -> argparse.Namespace:
 
 async def main() -> None:
     logger = logging.getLogger(__name__)
-    args = parse_args()
 
-    config = dacite.from_dict(DownloaderConfig, data=vars(args))
+    args = parse_args()
+    clean_args = preprocess_args(args)
+    config = dacite.from_dict(DownloaderConfig, data=clean_args, config=dacite.Config(cast=[tuple]))
     logger.debug(f'Parsed command-line arguments into config: {config}')
 
     downloader = BookDownloader(config=config)

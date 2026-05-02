@@ -1,4 +1,9 @@
+from argparse import Namespace
 from dataclasses import dataclass
+
+
+def preprocess_args(args: Namespace) -> dict:
+    return {k: v for k, v in vars(args).items() if v is not None}
 
 
 @dataclass
