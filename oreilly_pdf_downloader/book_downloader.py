@@ -19,11 +19,13 @@ class BookDownloader:
     CSS_FONT_URL_PAT = re.compile(r"""src:url\(['"]?(.*?\.(otf|woff2|woff|ttf))['"]?\)""")
 
     def __init__(self, config: DownloaderConfig) -> None:
-        self.session = requests.Session()
-        self._setup_session()
+        logger.debug(f'Initializing BookDownloader with config: {config}')
 
         self._config = config
         self._working_book: Book | None = None
+
+        self.session = requests.Session()
+        self._setup_session()
 
     @property
     def book(self) -> Book:

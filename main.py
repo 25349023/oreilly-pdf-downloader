@@ -62,12 +62,9 @@ def parse_args() -> argparse.Namespace:
 
 
 async def main() -> None:
-    logger = logging.getLogger(__name__)
-
     args = parse_args()
     clean_args = preprocess_args(args)
     config = dacite.from_dict(DownloaderConfig, data=clean_args, config=dacite.Config(cast=[tuple]))
-    logger.debug(f'Parsed command-line arguments into config: {config}')
 
     downloader = BookDownloader(config=config)
     target_isbn = input('Enter the ISBN of the book you want to download: ')
