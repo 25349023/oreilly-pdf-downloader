@@ -24,6 +24,7 @@ indent-style = "space"
 
 [dependency-groups]
 dev = [
+    "mypy>=1.20.2",
     "types-requests>=2.33.0.20260408",
     "types-tqdm>=4.67.3.20260408",
 ]
