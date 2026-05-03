@@ -51,6 +51,11 @@ class PDFPrinter:
         chapter_pdfs = sorted(book.pdf_dir.glob('chapters/*.pdf'), key=lambda p: int(p.stem.split('_')[0]))
         for pdf in tqdm.tqdm(chapter_pdfs, desc='Merging Chapters'):
             merger.append(pdf)
+        if self._config.compress_pdf:
+            with log_step(logger, 'Compressing PDF content streams', level=logging.INFO):
+                for page in tqdm.tqdm(merger.pages, desc='Compressing Pages'):
+                    page.compress_content_streams()
+                merger.compress_identical_objects()
         merger.write(book.pdf_dir / f'{book.title}.pdf')
 
     async def _print_one_chapter(self, html_path: Path, pdf_dir: Path):

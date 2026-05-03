@@ -14,4 +14,7 @@ class Config:
     # If True, only fetches a limited number of pages for testing purposes
     test_run: bool = False
 
+    # Whether to compress the final PDF to reduce file size
+    compress_pdf: bool = False
+
     # [TODO] For future: add sub config class for each component (e.g., printer), but keep simple for now

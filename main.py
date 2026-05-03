@@ -58,6 +58,10 @@ def parse_args() -> argparse.Namespace:
         '--page-size', nargs=2, type=int, metavar=('width', 'height'), 
         help='Set the page size (unit: mm) for the PDF',
     )  # fmt: skip
+    parser.add_argument(
+        '--compress-pdf', action='store_true',
+        help='Compress the final PDF to reduce file size (may cause higher CPU usage and longer processing time)',
+    )  # fmt: skip
     return parser.parse_args()
 
 
