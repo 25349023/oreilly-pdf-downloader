@@ -1,10 +1,12 @@
 import inspect
+import logging
 from contextlib import contextmanager
 from functools import wraps
+from typing import Any, Callable, ParamSpec, TypeVar, cast
 
 
 @contextmanager
-def log_step(logger, message, level):
+def log_step(logger: logging.Logger, message: str, level: int) -> Any:
     logger.log(level, f'Start: {message}')
     try:
         yield
@@ -14,26 +16,38 @@ def log_step(logger, message, level):
     logger.log(level, f'Finish: {message}')
 
 
-def with_log(logger, message, level):
-    def decorator(func):
-        sig = inspect.signature(func)
+P = ParamSpec('P')
+R = TypeVar('R')
 
-        @wraps(func)
-        def wrapper(*args, **kwargs):
+
+def with_log(logger: logging.Logger, message: str, level: int) -> Callable[[Callable[P, R]], Callable[P, R]]:
+    def decorator(func: Callable[P, R]) -> Callable[P, R]:
+        sig = inspect.signature(func)
+        is_async = inspect.iscoroutinefunction(func)
+
+        def get_message(*args: P.args, **kwargs: P.kwargs) -> str:
+            if '{' not in message:
+                return message
+
             bound_args = sig.bind(*args, **kwargs)
             bound_args.apply_defaults()
-            formatted_msg = message.format(**bound_args.arguments)
+            return message.format(**bound_args.arguments)
 
-            logger.log(level, f'Start: {formatted_msg}')
-            try:
-                result = func(*args, **kwargs)
-            except Exception as e:
-                logger.error(f'Error during {formatted_msg}: {e}')
-                raise
-            logger.log(level, f'Finish: {formatted_msg}')
+        if is_async:
 
-            return result
+            @wraps(func)
+            async def async_wrapper(*args: P.args, **kwargs: P.kwargs) -> R:
+                with log_step(logger, get_message(*args, **kwargs), level=level):
+                    return await func(*args, **kwargs)  # type: ignore
 
-        return wrapper
+            return cast(Callable[P, R], async_wrapper)
+        else:
+
+            @wraps(func)
+            def wrapper(*args: P.args, **kwargs: P.kwargs) -> R:
+                with log_step(logger, get_message(*args, **kwargs), level=level):
+                    return func(*args, **kwargs)
+
+            return wrapper
 
     return decorator
