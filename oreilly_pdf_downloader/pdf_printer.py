@@ -1,6 +1,7 @@
 import asyncio
 import logging
 from pathlib import Path
+from typing import Self
 
 import tqdm
 from playwright.async_api import Browser, Playwright
@@ -23,16 +24,16 @@ class PDFPrinter:
         logger.debug(f'Initialized PDFPrinter with config: {config}')
 
     @with_log(logger, 'Launching Playwright Chromium browser', level=logging.DEBUG)
-    async def __aenter__(self):
+    async def __aenter__(self) -> Self:
         self.browser = await self.chromium.launch()
         return self
 
-    async def __aexit__(self, exc_type, exc_val, exc_tb):
+    async def __aexit__(self, exc_type, exc_val, exc_tb) -> None:
         if self.browser:
             with log_step(logger, 'Closing Playwright Chromium browser', level=logging.DEBUG):
                 await self.browser.close()
 
-    async def print_book(self, book: Book):
+    async def print_book(self, book: Book) -> None:
         with log_step(logger, f'Printing chapters for book [{book.isbn}]', level=logging.INFO):
             all_chapters = (ch for ch in book.src_dir.iterdir() if ch.is_file())
             results = await tqdm_gather(
