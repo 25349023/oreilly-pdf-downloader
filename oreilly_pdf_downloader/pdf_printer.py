@@ -19,8 +19,8 @@ class PDFPrinter:
         self.chromium = pw.chromium
         self.browser: Browser | None = None
         self.sem = asyncio.Semaphore(10)
-        logger.debug(f'Initializing PDFPrinter with config: {config}')
-        self.config = config
+        self._config = config
+        logger.debug(f'Initialized PDFPrinter with config: {config}')
 
     @with_log(logger, 'Launching Playwright Chromium browser', level=logging.DEBUG)
     async def __aenter__(self):
@@ -65,7 +65,7 @@ class PDFPrinter:
             context = await self.browser.new_context()
             page = await context.new_page()
             await page.goto(f'file://{html_path.absolute()}')
-            w, h = self.config.page_size
+            w, h = self._config.page_size
             await page.pdf(path=pdf_path, width=f'{w}mm', height=f'{h}mm')
             await context.close()
 
