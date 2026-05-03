@@ -38,6 +38,11 @@ A tool to download O'Reilly ebooks as PDF format.
   ```
   Example: `210 297` for A4 size.
 
+- `--compress-pdf`: Compress the final PDF to reduce file size (may cause higher CPU usage and longer processing time).
+  ```bash
+  uv run python main.py --compress-pdf
+  ```
+
 ## Getting Your Cookie
 
 To download O'Reilly content, you need to provide your session cookie. Follow these steps to extract it:
